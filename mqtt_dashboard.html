@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MQTT RC Car Dashboard</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+    .slider-container { width: 300px; margin: 10px auto; }
+    input[type=range] { width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>RC Car MQTT Control</h1>
+
+  <div>
+    <button onclick="send('car/control', 'forward')">⬆️ Forward</button><br>
+    <button onclick="send('car/control', 'left')">⬅️ Left</button>
+    <button onclick="send('car/control', 'stop')">⏹️ Stop</button>
+    <button onclick="send('car/control', 'right')">➡️ Right</button><br>
+    <button onclick="send('car/control', 'backward')">⬇️ Backward</button>
+  </div>
+
+  <div class="slider-container">
+    <label>Speed: <span id="speedValue">150</span></label>
+    <input type="range" min="0" max="255" value="150" oninput="
+      document.getElementById('speedValue').innerText = this.value;
+      send('car/speed', this.value)">
+  </div>
+
+  <div class="slider-container">
+    <label>Light: <span id="lightValue">0</span></label>
+    <input type="range" min="0" max="255" value="0" oninput="
+      document.getElementById('lightValue').innerText = this.value;
+      send('car/light', this.value)">
+  </div>
+
+  <div class="slider-container">
+    <label>Pan: <span id="panValue">90</span></label>
+    <input type="range" min="0" max="180" value="90" oninput="
+      document.getElementById('panValue').innerText = this.value;
+      send('car/pan', this.value)">
+  </div>
+
+  <div class="slider-container">
+    <label>Tilt: <span id="tiltValue">90</span></label>
+    <input type="range" min="0" max="180" value="90" oninput="
+      document.getElementById('tiltValue').innerText = this.value;
+      send('car/tilt', this.value)">
+  </div>
+
+  <h3>Camera Feed</h3>
+  <img id="cameraImage" src="" style="width: 100%; max-width: 400px;">
+
+  <script>
+    const broker = 'wss://broker.hivemq.com:8884/mqtt';
+    const client = mqtt.connect(broker);
+
+    client.on('connect', () => {
+      console.log('Connected to MQTT Broker');
+    });
+
+    function send(topic, message) {
+      client.publish(topic, message);
+      console.log('Published', topic, message);
+    }
+
+    // WebSocket untuk stream kamera
+    const ws = new WebSocket("ws://" + location.hostname + "/Camera");
+    ws.binaryType = 'blob';
+    ws.onmessage = event => {
+      document.getElementById("cameraImage").src = URL.createObjectURL(event.data);
+    };
+  </script>
+</body>
+</html>
